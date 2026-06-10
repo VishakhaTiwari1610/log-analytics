@@ -2,8 +2,13 @@ import requests
 import time
 import random
 import json
+import os
+from urllib.parse import urlparse
+from dotenv import load_dotenv
 
-BASE_URL = "http://localhost:8000/api/v1"
+load_dotenv()
+
+BASE_URL = os.getenv("JOBFINDER_BASE_URL", "https://job-finder-backend-ffcm.onrender.com").rstrip("/")
 session = requests.Session()
 token = None
 
@@ -20,7 +25,9 @@ def login_correct():
             set_cookie = response.headers.get("Set-Cookie", "")
             if "token=" in set_cookie:
                 token_value = set_cookie.split("token=")[1].split(";")[0]
-                session.cookies.set("token", token_value, domain="localhost")
+                token = token_value
+                cookie_domain = urlparse(BASE_URL).hostname
+                session.cookies.set("token", token_value, domain=cookie_domain)
                 print(f"Correct login: 200, token stored")
             else:
                 print("Login 200 but no token in response")
