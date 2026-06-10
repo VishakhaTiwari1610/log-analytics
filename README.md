@@ -110,10 +110,11 @@ AWS_SECRET_ACCESS_KEY=
 AWS_SQS_QUEUE_URL=
 MONGODB_URI=
 SLACK_WEBHOOK_URL=
-JOBFINDER_BASE_URL=https://your-jobfinder-backend.onrender.com
+JOBFINDER_BASE_URL=https://your-jobfinder-backend.onrender.com/api/v1
 
 For deployed log generation, set `JOBFINDER_BASE_URL` in Render to the
-deployed JobFinder API/backend base URL. Do not include a trailing slash.
+deployed JobFinder API base URL, including `/api/v1`. Do not include a
+trailing slash.
 
 ## Key Design Decisions
 

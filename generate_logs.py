@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-BASE_URL = os.getenv("JOBFINDER_BASE_URL", "https://job-finder-backend-ffcm.onrender.com").rstrip("/")
+BASE_URL = os.getenv("JOBFINDER_BASE_URL", "https://job-finder-backend-ffcm.onrender.com/api/v1").rstrip("/")
 session = requests.Session()
 token = None
 
