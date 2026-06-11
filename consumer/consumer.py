@@ -75,5 +75,3 @@ while True:
     poll_queue()
     schedule.run_pending()
     time.sleep(1)
-
-    # {"event":"api_request","method":"GET","route":"/api/v1/jobs/get","statusCode":401,"responseTime":1,"userId":null,"ip":"::1","timestamp":"2026-06-08T15:45:10.626Z"}

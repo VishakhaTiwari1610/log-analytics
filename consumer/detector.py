@@ -9,17 +9,32 @@ client = MongoClient(os.getenv("MONGODB_URI"))
 db = client["jobfinder_analytics"]
 logs = db["logs"]
 
+def utc_js_iso(dt):
+    return dt.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+def get_status_code(log):
+    try:
+        return int(log.get("statusCode", log.get("status_code", 0)) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+def get_response_time(log):
+    try:
+        return float(log.get("responseTime", log.get("response_time", 0)) or 0)
+    except (TypeError, ValueError):
+        return 0
+
 def get_recent_logs(minutes):
     """Get logs from the last N minutes"""
     since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
     return list(logs.find({
-        "timestamp": {"$gte": since.isoformat()}
+        "timestamp": {"$gte": utc_js_iso(since)}
     }))
 
 def detect_error_spike():
     """Rule 1: More than 10 errors in last 5 minutes"""
     recent = get_recent_logs(5)
-    errors = [l for l in recent if l.get("statusCode", 0) >= 400]
+    errors = [log for log in recent if get_status_code(log) >= 400]
     
     if len(errors) > 10:
         return {
@@ -36,7 +51,7 @@ def detect_failed_login_spike():
     """Rule 2: More than 5 failed logins in last 2 minutes"""
     since = datetime.now(timezone.utc) - timedelta(minutes=2)
     recent = list(logs.find({
-        "timestamp": {"$gte": since.isoformat()},
+        "timestamp": {"$gte": utc_js_iso(since)},
         "route": "/api/v1/user/login",
         "statusCode": {"$in": [400, 401]}
     }))
@@ -60,7 +75,7 @@ def detect_slow_responses():
     route_times = {}
     for log in recent:
         route = log.get("route", "unknown")
-        rt = log.get("responseTime", 0)
+        rt = get_response_time(log)
         if route not in route_times:
             route_times[route] = []
         route_times[route].append(rt)

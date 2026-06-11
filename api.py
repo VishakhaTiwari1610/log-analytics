@@ -20,8 +20,21 @@ client = MongoClient(os.getenv("MONGODB_URI"))
 db = client["jobfinder_analytics"]
 logs_collection = db["logs"]
 
-@app.get("/logs/summary")
-@app.get("/logs/summary")
+def utc_js_iso(dt):
+    return dt.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+def get_status_code(log):
+    try:
+        return int(log.get("statusCode", log.get("status_code", 0)) or 0)
+    except (TypeError, ValueError):
+        return 0
+
+def get_response_time(log):
+    try:
+        return float(log.get("responseTime", log.get("response_time", 0)) or 0)
+    except (TypeError, ValueError):
+        return 0
+
 @app.get("/logs/summary")
 def get_logs_summary():
     # Last 50 logs of ALL types
@@ -32,21 +45,20 @@ def get_logs_summary():
     )
     
     # Stats for last 5 minutes — only api_request events
-    since = (datetime.now(timezone.utc) - timedelta(minutes=5)).isoformat()
-    since = since.replace("+00:00", "Z")
+    since = utc_js_iso(datetime.now(timezone.utc) - timedelta(minutes=5))
     recent = list(logs_collection.find({
         "timestamp": {"$gte": since},
         "event": "api_request"
     }))
     
     total = len(recent)
-    errors = len([l for l in recent if l.get("statusCode", 0) >= 400])
+    errors = len([log for log in recent if get_status_code(log) >= 400])
     success = total - errors
     
     avg_response_time = 0
     if recent:
         avg_response_time = round(
-            sum(l.get("responseTime", 0) for l in recent) / total, 2
+            sum(get_response_time(log) for log in recent) / total, 2
         )
 
     return {
